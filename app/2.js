@@ -10,6 +10,20 @@ var material = new THREE.PointCloudMaterial({
 
 geometry = new THREE.Geometry();
 
+for (var i = 0; i < 1; i++){
+    x = 0;
+    y = 0;
+    z = 0;
+
+    geometry.vertices.push( new THREE.Vector3( x, y , z));
+    geometry.colors.push( new THREE.Color( Math.random(),  Math.random(),  Math.random() ) );
+}
+
+var pointCloud = new THREE.PointCloud( geometry, material );
+scene.add(pointCloud);
+
+
+
 
 
 
