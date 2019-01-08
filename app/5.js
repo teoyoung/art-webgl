@@ -113,6 +113,9 @@ function animate() {
 
         }
 
+
+    } else {
+        run = true;
     }
 
 
@@ -135,22 +138,30 @@ animate();
 
 function Run(){
 
+    if (run){
 
-    if (form.length - 1 === start){
 
-        console.log('Назад');
+        if (form.length - 1 === start){
 
-        start = 0;
-        target = 1;
+            console.log('Назад');
+    
+            start = 0;
+            target = 1;
+    
+        } else {
+    
+            start = 1;
+            target = 0;
+    
+        }
+    
+        t = 0;
 
-    } else {
-
-        start = 1;
-        target = 0;
 
     }
 
-    t = 0;
+    run = false;
+
   
 }
 
