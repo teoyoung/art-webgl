@@ -24,9 +24,22 @@ var vertexShader = `
 
   uniform float time;
 
+  #define PI 3.1415926538
+
   void main() {
-    gl_Position = projectionMatrix * modelViewMatrix * vec4( mix(position, position2, time), 1.0 );
-    gl_PointSize = 1.0;
+
+    float l = abs(sin(time * PI));
+    float X = (1.0-l)*0.0 + l * 0.5;
+    vec3 _Pos = mix(position, position2, abs(sin(X * PI)));
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(_Pos, 1.0);
+
+    if (_Pos.y < 5.0){
+      gl_PointSize = 5.0 * _Pos.z * _Pos.x;
+    } else {
+      gl_PointSize = 1.0;
+    }
+
+    
   }
 `;
 
@@ -95,6 +108,7 @@ loader.load(
 
 function Recalc(){
   
+
   
   if( start === positions.length || start > positions.length){
     //console.log('Пересчитал старт');
@@ -123,7 +137,11 @@ var rounded = function(number){
 
 function animate() {
 
-    if( rounded(t) === 3 ){
+    let l = Math.abs(Math.sin(t * Math.PI));
+    let X = (1.0-l)*0.0 + l * 0.5;
+
+
+    if( rounded(X) === 3 ){
       //console.log('Очистка');
       t = 0;
     }
@@ -133,14 +151,14 @@ function animate() {
     if (c === 1){
       start += 2;
       Recalc();
-      geometry.addAttribute( 'position', new THREE.BufferAttribute( positions[start], 3 ) );
+      //geometry.addAttribute( 'position', new THREE.BufferAttribute( positions[start], 3 ) );
     } else if (c === 0){
       target += start + 1;
       Recalc();
-      geometry.addAttribute( 'position2', new THREE.BufferAttribute( positions[target], 3 ) );
+      //geometry.addAttribute( 'position2', new THREE.BufferAttribute( positions[target], 3 ) );
     }
 
-    material.uniforms.time.value = c;
+    material.uniforms.time.value += 0.008;
 
     requestAnimationFrame( animate );
     controls.update();
