@@ -53,9 +53,20 @@ var vertexShader = `
   attribute vec3 instPos;
   varying vec2 vUv;
 
+  varying vec3 vColor;
 
   void main() {
-    vec3 morph = mix(position, newPosition, abs(sin(time * sin(instPos.x) + sin(instPos.z) )));
+  
+
+    vec4 worldPosition = projectionMatrix * vec4(instPos / 70., 1.0);
+    vColor = abs(worldPosition.xyz) * 0.1;
+
+    vec3 pf = vColor / vec3( abs(sin(time)), 0., 0.);
+
+    vec3 np = vec3(position.x, position.y, position.z);   
+    vec3 ep = vec3(newPosition.x, newPosition.y, newPosition.z); 
+    
+    vec3 morph = mix(np, ep, abs(sin(time * sin(instPos.x) + sin(instPos.z) )));
     vUv = uv;
     gl_Position = projectionMatrix * modelViewMatrix * vec4( instPos + morph, 1.0 );
   }
@@ -66,14 +77,72 @@ var fragmentShader = `
   varying vec2 vUv;
   uniform sampler2D texture;
   varying vec3 vColor;
+  uniform float time;
+
+
+  float random(float p) {
+    return fract(sin(p)*10000.);
+  }
+  
+  float noise(vec2 p) {
+    return random(p.x + p.y*10000.);
+  }
+  
+  vec2 sw(vec2 p) {return vec2( floor(p.x) , floor(p.y) );}
+  vec2 se(vec2 p) {return vec2( ceil(p.x)  , floor(p.y) );}
+  vec2 nw(vec2 p) {return vec2( floor(p.x) , ceil(p.y)  );}
+  vec2 ne(vec2 p) {return vec2( ceil(p.x)  , ceil(p.y)  );}
+  
+  float smoothNoise(vec2 p) {
+    vec2 inter = smoothstep(0., 1., fract(p));
+    float s = mix(noise(sw(p)), noise(se(p)), inter.x);
+    float n = mix(noise(nw(p)), noise(ne(p)), inter.x);
+    return mix(s, n, inter.y);
+    return noise(nw(p));
+  }
+  
+  float movingNoise(vec2 p) {
+    float total = 0.0;
+    total += smoothNoise(p     - time);
+    total += smoothNoise(p*2.  + time) / 2.;
+    total += smoothNoise(p*4.  - time) / 4.;
+    total += smoothNoise(p*8.  + time) / 8.;
+    total += smoothNoise(p*16. - time) / 16.;
+    total /= 1. + 1./2. + 1./4. + 1./8. + 1./16.;
+    return total;
+  }
+  
+  float nestedNoise(vec2 p) {
+    float x = movingNoise(p);
+    float y = movingNoise(p + 100.);
+    return movingNoise(p + vec2(x, y));
+  }
+
+
+
   void main() {
 
+   
+    // ring
+
+    
+        
     vec4 t = texture2D(texture, vUv * 1.0);
     float b = 0.7;
     if (!gl_FrontFacing){   
         b = 0.4;
     }
-    gl_FragColor = t * b ;  
+    float brightness = nestedNoise(vColor.xz * 12.);
+    //gl_FragColor = t * b * (brightness * 1.2); 
+    gl_FragColor = t * b;
+    //gl_FragColor = vec4(brightness, 0., 0., 1.0);
+
+
+   //vec2 g = vColor.xz * 2.;
+   //float k = 0.02 / abs(0.5 - length(g));   
+   //gl_FragColor = vec4(vec3(k), 1.0);
+   //gl_FragColor = vec4(vColor.x, vColor.y, vColor.z, 1.0);
+
   }
 `;
 
