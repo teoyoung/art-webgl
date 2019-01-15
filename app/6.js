@@ -18,7 +18,7 @@ const plane = new THREE.Mesh( new THREE.PlaneBufferGeometry( 5000, 5000, 32 ), n
 plane.rotation.x = 90*Math.PI/180;
 scene.add( plane );
 
-const positions = AddPositions( 150, 150, 15);
+const positions = AddPositions( 50, 50, 15);
 
 function AddPositions( px, pz, padding ){
 
