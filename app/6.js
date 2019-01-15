@@ -52,6 +52,8 @@ var vertexShader = `
   attribute vec2 uv;
   attribute vec3 instPos;
   varying vec2 vUv;
+
+
   void main() {
     vec3 morph = mix(position, newPosition, abs(sin(time * sin(instPos.x) + sin(instPos.z) )));
     vUv = uv;
@@ -63,26 +65,33 @@ var fragmentShader = `
   precision highp float;
   varying vec2 vUv;
   uniform sampler2D texture;
+  varying vec3 vColor;
   void main() {
+
     vec4 t = texture2D(texture, vUv * 1.0);
     float b = 0.7;
     if (!gl_FrontFacing){   
         b = 0.4;
     }
-    gl_FragColor = t * b ;   
+    gl_FragColor = t * b ;  
   }
 `;
 
+console.log('fragmentShader', fragmentShader);
+
 var shader = new THREE.RawShaderMaterial({
-    uniforms: { texture: { type: "t", value: t_loader.load( 'asset/tree.jpg', function(e){ e.wrapS = e.wrapT = THREE.RepeatWrapping } ) }, time: { type: "f", value: 0.0 } },
+    uniforms: { 
+        texture: { type: "t", value: t_loader.load( 'asset/tree.jpg', function(e){ e.wrapS = e.wrapT = THREE.RepeatWrapping } ) }, 
+        time: { type: "f", value: 0.0 }         
+    },
     vertexShader: vertexShader,
     fragmentShader: fragmentShader,
-    side:THREE.DoubleSide
+    side:THREE.DoubleSide,
+    fog: true
 });
 
 
 const tree = {};
-  
 
 
 obj_loader.load(
@@ -131,6 +140,7 @@ obj_loader.load(
 );
 
 
+
 function InstancedBuffer( obj ){
 
     let instanced = new THREE.InstancedBufferGeometry().copy(tree.obj);
@@ -140,10 +150,12 @@ function InstancedBuffer( obj ){
     console.log('target', tree.target);
     instanced.addAttribute("newPosition", new THREE.BufferAttribute(new Float32Array(tree.target), 3, false ));
 
-    var mesh = new THREE.Mesh(instanced, shader);
+    let mesh = new THREE.Mesh(instanced, shader);
 
     mesh.position.x = 0;
     mesh.position.z = 0;
+    mesh.frustumCulled = false;
+    console.log('mesh', mesh);
 
     scene.add(mesh);
 
@@ -151,6 +163,12 @@ function InstancedBuffer( obj ){
 
 
 
+let uii = document.getElementById('render');
+
+function UIupd(){
+    uii.innerHTML = renderer.info.render.triangles;
+    
+}
 
 
 
@@ -159,7 +177,7 @@ function InstancedBuffer( obj ){
 function animate() {
 
     shader.uniforms.time.value += 0.01;
-
+    UIupd();
     requestAnimationFrame( animate );
     controls.update();
     renderer.render( scene, camera );
