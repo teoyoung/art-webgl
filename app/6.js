@@ -18,7 +18,7 @@ const plane = new THREE.Mesh( new THREE.PlaneBufferGeometry( 5000, 5000, 32 ), n
 plane.rotation.x = 90*Math.PI/180;
 scene.add( plane );
 
-const positions = AddPositions( 50, 50, 15);
+const positions = AddPositions( 50, 5, 15);
 
 function AddPositions( px, pz, padding ){
 
@@ -54,10 +54,12 @@ var vertexShader = `
   varying vec2 vUv;
 
   varying vec3 vColor;
+  varying vec3 vPos;
+
 
   void main() {
   
-
+    vPos = instPos;
     vec4 worldPosition = projectionMatrix * vec4(instPos / 70., 1.0);
     vColor = abs(worldPosition.xyz) * 0.1;
 
@@ -78,7 +80,7 @@ var fragmentShader = `
   uniform sampler2D texture;
   varying vec3 vColor;
   uniform float time;
-
+  varying vec3 vPos;
 
   float random(float p) {
     return fract(sin(p)*10000.);
@@ -125,6 +127,10 @@ var fragmentShader = `
    
     // ring
 
+    if (vColor.x > 0.0){
+        discard;
+    }
+
     
         
     vec4 t = texture2D(texture, vUv * 1.0);
@@ -141,7 +147,7 @@ var fragmentShader = `
    //vec2 g = vColor.xz * 2.;
    //float k = 0.02 / abs(0.5 - length(g));   
    //gl_FragColor = vec4(vec3(k), 1.0);
-   //gl_FragColor = vec4(vColor.x, vColor.y, vColor.z, 1.0);
+   //gl_FragColor = vec4(vColor.x, 0., 0., 1.0);
 
   }
 `;
