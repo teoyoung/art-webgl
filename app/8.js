@@ -19,8 +19,9 @@ for( var j = 0; j < 360*Math.PI/180; j += 30*Math.PI/180 ) {
     let line = new THREE.LineSegments( edges, new THREE.LineBasicMaterial( { color: 0x000000 } ) );
     line.position.set( Math.cos( j ) * 100, Math.sin( j ) * 100,  0);
     line.rotation.z = j ;
-    console.log(line);
+    line.updateMatrix();
 
+    console.log("fds");
     //line.rotateOnAxis(j);
 
     gB.add( line );
@@ -28,7 +29,7 @@ for( var j = 0; j < 360*Math.PI/180; j += 30*Math.PI/180 ) {
 }
 
 
-console.log(gC.children[0].children[0]);
+
 scene.add(gC);
 
 
@@ -96,10 +97,11 @@ function animate() {
         e.children[0].rotation.y += 0.01;
         */
         //e.children[0].position.x += 0.1;
-        e.children[0].translateX( 1);
+        //e.children[0].translateX(0.1);
+
+        //var v1 = new THREE.Vector3( 0.6, 0, 0 );
+        //e.children[0].translateOnAxis(v1, 0.4);
         //e.children[0].setRotationFromQuaternion(0.3);
-        var xAxis = new THREE.Vector3(0,1,0);
-        rotateAroundObjectAxis(e.children[0], xAxis, Math.PI / 180);
         //e.children[0].rotateOnAxis();
         
     });
