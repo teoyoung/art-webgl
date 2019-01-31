@@ -18,7 +18,7 @@ let time_s = 0;
 
 let tss = 0;
 
-for( var j = 0; j < 1800*Math.PI/180; j += 20*Math.PI/180 ) {
+for( var j = 0; j < 2800*Math.PI/180; j += 20*Math.PI/180 ) {
 
     
 
