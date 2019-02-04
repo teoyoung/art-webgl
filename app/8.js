@@ -3,7 +3,7 @@ stats.domElement.style.position = 'absolute';
 stats.domElement.style.top = '0';
 document.body.appendChild(stats.domElement);
 
-const zoom = 1.3;
+const zoom = 1.2;
 
 camera = new THREE.OrthographicCamera( window.innerWidth / - zoom, window.innerWidth / zoom, window.innerHeight / zoom, window.innerHeight / - zoom, 1, 100000 );
 camera.position.z = 1000;
@@ -11,36 +11,43 @@ scene.background = new THREE.Color( 0xffffff );
 
 
 
-let object = DrawEdgeFunction();
+let object = DrawEdgeFunction( 200, 10, 0.5 );
 scene.add(object);
 
-function DrawEdgeFunction(){
+function DrawEdgeFunction( lenght, width, size ){
 
-    let elements = new THREE.Group();
+    let ln = lenght / 2;   
+
+    let elements = new THREE.Object3D();
+
     let drawEdge = [
-        { x:0, y:-50, z:-50, rx:0, ry:0, rz:0 }, { x:0, y:-50, z:50, rx:0, ry:0, rz:0 },
-        { x:0, y:50, z:-50, rx:0, ry:0, rz:0 }, { x:0, y:50, z:50, rx:0, ry:0, rz:0 },
-        { x:50, y:0, z:-50, rx:0, ry:0, rz:90, lenght: true }, { x:-50, y:0, z:-50, rx:0, ry:0, rz:90, lenght: true },
-        { x:50, y:0, z:50, rx:0, ry:0, rz:90, lenght: true }, { x:-50, y:0, z:50, rx:0, ry:0, rz:90, lenght: true },
-        { x:50, y:-50, z:0, rx:0, ry:90, rz:0, lenght: true }, { x:50, y:50, z:0, rx:0, ry:90, rz:0, lenght: true },
-        { x:-50, y:-50, z:0, rx:0, ry:90, rz:0, lenght: true }, { x:-50, y:50, z:0, rx:0, ry:90, rz:0, lenght: true }
+        { x:0, y:-ln, z:-ln, rx:0, ry:0, rz:0 }, { x:0, y:-ln, z:ln, rx:0, ry:0, rz:0 },
+        { x:0, y:ln, z:-ln, rx:0, ry:0, rz:0 }, { x:0, y:ln, z:ln, rx:0, ry:0, rz:0 },
+        { x:ln, y:0, z:-ln, rx:0, ry:0, rz:90, lenght: true }, { x:-ln, y:0, z:-ln, rx:0, ry:0, rz:90, lenght: true },
+        { x:ln, y:0, z:ln, rx:0, ry:0, rz:90, lenght: true }, { x:-ln, y:0, z:ln, rx:0, ry:0, rz:90, lenght: true },
+        { x:ln, y:-ln, z:0, rx:0, ry:90, rz:0, lenght: true }, { x:ln, y:ln, z:0, rx:0, ry:90, rz:0, lenght: true },
+        { x:-ln, y:-ln, z:0, rx:0, ry:90, rz:0, lenght: true }, { x:-ln, y:ln, z:0, rx:0, ry:90, rz:0, lenght: true }
     ];    
 
     drawEdge.forEach(function( e ) {
 
-        let lenghtEdge = 100;
+        let lenghtEdge = lenght;
 
         if(e.lenght){
-            lenghtEdge = 110;
+            lenghtEdge = lenght * 0.015 + lenght;
         }        
 
-        var cube = new THREE.Mesh( new THREE.BoxBufferGeometry( lenghtEdge, 10, 10 ), new THREE.MeshBasicMaterial( {color: 0x000000} ) );
+        var cube = new THREE.Mesh( new THREE.BoxBufferGeometry( lenghtEdge, width, width ), new THREE.MeshBasicMaterial( {color: 0x000000} ) );
         cube.position.set(e.x, e.y, e.z);
         cube.rotation.set(e.rx *Math.PI/180, e.ry*Math.PI/180, e.rz*Math.PI/180);
         elements.add( cube );
 
     });
+
+    elements.scale.set(size, size, size);
+
     return elements;
+
 }
 
 
@@ -53,32 +60,37 @@ let gC = new THREE.Group();
 
 let time_s = 0;
 
-let tss = 0;
+let tss = 0.5;
 let scale_ = 0;
 
 for( var j = 0; j < 2800*Math.PI/180; j += 20*Math.PI/180 ) {
 
 
-
-    if ( j < 1600*Math.PI/180 ){
-        scale_ += 0.5;
+    
+    if ( j < 1800*Math.PI/180 ){
+        scale_ += 0.005;
     } else {
-        if (scale_ < 0.1){
+        if (scale_ < 0.01){
             scale_ = 0;
         } else {
-            scale_ -= 1.0;
+           scale_ -= 0.022;
+           console.log(scale_);
         }
         
-    }   
-    
+    }       
 
     if(time_s < 1){
-        time_s += 0.1;
+        time_s += 0.01;
     } else {
         time_s = 0;
     }
 
-    let obj = DrawEdgeFunction();
+    let cube = DrawEdgeFunction( 200, 8, 0.1 );
+    cube.position.set( Math.cos( j ) * 100 * (j*0.2), Math.sin( j ) * 100 * (j*0.2),  0);
+    cube.scale.set(scale_,scale_,scale_);
+    cube.rotation.x += 0.01;
+    cube.rotation.z += 0.1;
+    //cube.rotateX(1.1);
 
     let gB = new THREE.Group();
     let line = new THREE.LineSegments( edges, new THREE.LineBasicMaterial( { color: 0x000000 } ) );
@@ -90,14 +102,13 @@ for( var j = 0; j < 2800*Math.PI/180; j += 20*Math.PI/180 ) {
     line.rotation.z += j ;
     line.rotateY(tss);
     line.rotateX(tss);
-    line.updateMatrix();
     //line.rotateOnAxis(j);
 
     gB.add( line );
-    gC.add( gB );
+    gC.add( cube );
 
+    tss += 0.0001;
 
-    tss += 0.09;
 }
 
 
@@ -118,8 +129,8 @@ let k = 0;
 
 function animate() {
 
-    object.rotation.x += 0.01;
-    object.rotation.y += 0.01;
+    object.rotateY(0.1);
+    object.rotateX(0.1);
 
     if (time < 1){
         time += 0.0001;
