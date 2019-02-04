@@ -3,12 +3,49 @@ stats.domElement.style.position = 'absolute';
 stats.domElement.style.top = '0';
 document.body.appendChild(stats.domElement);
 
-camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 1, 100000 );
+const zoom = 1.3;
+
+camera = new THREE.OrthographicCamera( window.innerWidth / - zoom, window.innerWidth / zoom, window.innerHeight / zoom, window.innerHeight / - zoom, 1, 100000 );
 camera.position.z = 1000;
 scene.background = new THREE.Color( 0xffffff );
 
 
-// 
+
+let object = DrawEdgeFunction();
+scene.add(object);
+
+function DrawEdgeFunction(){
+
+    let elements = new THREE.Group();
+    let drawEdge = [
+        { x:0, y:-50, z:-50, rx:0, ry:0, rz:0 }, { x:0, y:-50, z:50, rx:0, ry:0, rz:0 },
+        { x:0, y:50, z:-50, rx:0, ry:0, rz:0 }, { x:0, y:50, z:50, rx:0, ry:0, rz:0 },
+        { x:50, y:0, z:-50, rx:0, ry:0, rz:90, lenght: true }, { x:-50, y:0, z:-50, rx:0, ry:0, rz:90, lenght: true },
+        { x:50, y:0, z:50, rx:0, ry:0, rz:90, lenght: true }, { x:-50, y:0, z:50, rx:0, ry:0, rz:90, lenght: true },
+        { x:50, y:-50, z:0, rx:0, ry:90, rz:0, lenght: true }, { x:50, y:50, z:0, rx:0, ry:90, rz:0, lenght: true },
+        { x:-50, y:-50, z:0, rx:0, ry:90, rz:0, lenght: true }, { x:-50, y:50, z:0, rx:0, ry:90, rz:0, lenght: true }
+    ];    
+
+    drawEdge.forEach(function( e ) {
+
+        let lenghtEdge = 100;
+
+        if(e.lenght){
+            lenghtEdge = 110;
+        }        
+
+        var cube = new THREE.Mesh( new THREE.BoxBufferGeometry( lenghtEdge, 10, 10 ), new THREE.MeshBasicMaterial( {color: 0x000000} ) );
+        cube.position.set(e.x, e.y, e.z);
+        cube.rotation.set(e.rx *Math.PI/180, e.ry*Math.PI/180, e.rz*Math.PI/180);
+        elements.add( cube );
+
+    });
+    return elements;
+}
+
+
+
+
 let edges = new THREE.EdgesGeometry( new THREE.BoxBufferGeometry( 2, 2, 2 ) );
 
 
@@ -17,9 +54,22 @@ let gC = new THREE.Group();
 let time_s = 0;
 
 let tss = 0;
+let scale_ = 0;
 
 for( var j = 0; j < 2800*Math.PI/180; j += 20*Math.PI/180 ) {
 
+
+
+    if ( j < 1600*Math.PI/180 ){
+        scale_ += 0.5;
+    } else {
+        if (scale_ < 0.1){
+            scale_ = 0;
+        } else {
+            scale_ -= 1.0;
+        }
+        
+    }   
     
 
     if(time_s < 1){
@@ -28,6 +78,7 @@ for( var j = 0; j < 2800*Math.PI/180; j += 20*Math.PI/180 ) {
         time_s = 0;
     }
 
+    let obj = DrawEdgeFunction();
 
     let gB = new THREE.Group();
     let line = new THREE.LineSegments( edges, new THREE.LineBasicMaterial( { color: 0x000000 } ) );
@@ -35,7 +86,7 @@ for( var j = 0; j < 2800*Math.PI/180; j += 20*Math.PI/180 ) {
     let sc = 1 * j;
     line.localpos = 1;
     let sv = line.position;
-    line.scale.set(sc, sc,sc);
+    line.scale.set(scale_, scale_,scale_);
     line.rotation.z += j ;
     line.rotateY(tss);
     line.rotateX(tss);
@@ -46,7 +97,7 @@ for( var j = 0; j < 2800*Math.PI/180; j += 20*Math.PI/180 ) {
     gC.add( gB );
 
 
-    tss += 0.1;
+    tss += 0.09;
 }
 
 
@@ -67,6 +118,9 @@ let k = 0;
 
 function animate() {
 
+    object.rotation.x += 0.01;
+    object.rotation.y += 0.01;
+
     if (time < 1){
         time += 0.0001;
     }
@@ -77,43 +131,11 @@ function animate() {
     renderer.render( scene, camera );
     stats.update();
 
-    gC.children.forEach(function( e ) {
-        /*
-        
-        e.children[0].rotation.y += 0.01;
-        */
-        //e.children[0].position.x += 0.1;
-
-        /*
-
-        if(e.children[0].localpos < 20){
-            e.children[0].localpos += 0.05;
-            e.children[0].translateX(1);
-            e.children[0].rotateX(0.01);
-            e.children[0].scale.set(e.children[0].localpos, e.children[0].localpos, e.children[0].localpos)
-        } else {
-            e.children[0].localpos = 1;
-            console.log(e.children[0].position.x, e.children[0].savepos.x);
-        }
-        */
-
-        
-        
-        
-
-        //console.log(e.children[0].position.x);
-
-        //var v1 = new THREE.Vector3( 0.6, 0, 0 );
-        //e.children[0].translateOnAxis(v1, 0.4);
-        //e.children[0].setRotationFromQuaternion(0.3);
-        //e.children[0].rotateOnAxis();
-        
-    });
 
     //gC.rotation.z -= 18.5;
     gC.rotation.z -= 0.7 / 2;
     //console.log(k);
-    
+
 
 }
 
