@@ -11,9 +11,6 @@ scene.background = new THREE.Color( 0xffffff );
 
 
 
-let object = DrawEdgeFunction( 200, 10, 0.5 );
-scene.add(object);
-
 function DrawEdgeFunction( lenght, width, size ){
 
     let ln = lenght / 2;   
@@ -70,11 +67,10 @@ for( var j = 0; j < 2800*Math.PI/180; j += 20*Math.PI/180 ) {
     if ( j < 1800*Math.PI/180 ){
         scale_ += 0.005;
     } else {
-        if (scale_ < 0.01){
-            scale_ = 0;
+        if (scale_ < 0.001){
+            //scale_ = 0;
         } else {
-           scale_ -= 0.022;
-           console.log(scale_);
+           scale_ -= 0.01;
         }
         
     }       
@@ -88,9 +84,8 @@ for( var j = 0; j < 2800*Math.PI/180; j += 20*Math.PI/180 ) {
     let cube = DrawEdgeFunction( 200, 8, 0.1 );
     cube.position.set( Math.cos( j ) * 100 * (j*0.2), Math.sin( j ) * 100 * (j*0.2),  0);
     cube.scale.set(scale_,scale_,scale_);
-    cube.rotation.x += 0.01;
-    cube.rotation.z += 0.1;
-    //cube.rotateX(1.1);
+    cube.rotateX(j / 80);
+    cube.rotateY(j / 80);
 
     let gB = new THREE.Group();
     let line = new THREE.LineSegments( edges, new THREE.LineBasicMaterial( { color: 0x000000 } ) );
@@ -107,7 +102,7 @@ for( var j = 0; j < 2800*Math.PI/180; j += 20*Math.PI/180 ) {
     gB.add( line );
     gC.add( cube );
 
-    tss += 0.0001;
+    tss += 0.1;
 
 }
 
@@ -128,15 +123,6 @@ let time = 0;
 let k = 0;
 
 function animate() {
-
-    object.rotateY(0.1);
-    object.rotateX(0.1);
-
-    if (time < 1){
-        time += 0.0001;
-    }
-
-    k += 0.01;
 
     requestAnimationFrame( animate );
     renderer.render( scene, camera );
