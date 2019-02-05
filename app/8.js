@@ -62,7 +62,7 @@ let scale_ = 0;
 
 for( var j = 0; j < 2800*Math.PI/180; j += 20*Math.PI/180 ) {
 
-
+    let gB = new THREE.Group();
     
     if ( j < 1800*Math.PI/180 ){
         scale_ += 0.005;
@@ -84,10 +84,11 @@ for( var j = 0; j < 2800*Math.PI/180; j += 20*Math.PI/180 ) {
     let cube = DrawEdgeFunction( 200, 8, 0.1 );
     cube.position.set( Math.cos( j ) * 100 * (j*0.2), Math.sin( j ) * 100 * (j*0.2),  0);
     cube.scale.set(scale_,scale_,scale_);
-    cube.rotateX(j / 80);
-    cube.rotateY(j / 80);
+    cube.rotateX(tss);
+    cube.rotateY(tss);
+    cube.rotation.z += j ;
 
-    let gB = new THREE.Group();
+    
     let line = new THREE.LineSegments( edges, new THREE.LineBasicMaterial( { color: 0x000000 } ) );
     line.position.set( Math.cos( j ) * 100 * (j*0.2), Math.sin( j ) * 100 * (j*0.2),  0);
     let sc = 1 * j;
@@ -99,10 +100,10 @@ for( var j = 0; j < 2800*Math.PI/180; j += 20*Math.PI/180 ) {
     line.rotateX(tss);
     //line.rotateOnAxis(j);
 
-    gB.add( line );
-    gC.add( cube );
+    gB.add( cube );
+    gC.add( gB );
 
-    tss += 0.1;
+    tss += 0.001;
 
 }
 
