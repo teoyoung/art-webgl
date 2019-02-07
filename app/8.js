@@ -58,4 +58,17 @@ function animate() {
 
 }
 
+window.addEventListener( 'resize', onWindowResize, false );
+
+
+function onWindowResize() {
+    camera.left = window.innerWidth / - zoom;
+    camera.right =  window.innerWidth / zoom;
+    camera.top = window.innerHeight / zoom;
+    camera.bottom = window.innerHeight / - zoom;
+    camera.updateProjectionMatrix();
+    renderer.setSize( window.innerWidth, window.innerHeight );
+}
+
+
 animate();
