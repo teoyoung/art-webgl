@@ -60,13 +60,13 @@ var vertexShader = `
 
     vec2 runUVs = vec2(uv.x * step + (time * step ) , uv.y);
     
-    float run = texture2D( texture, runUVs ).r;
-    float cloude = texture2D( texture, vec2(uv.x * step, uv.y + time / 2.) ).g;
-    float pos = mix(run, cloude, run);
+    vec4 run = texture2D( texture, runUVs );
+    vec4 cloude = texture2D( texture, vec2(uv.x * step, uv.y + time / 2.) );
+    float pos = mix(run.r, cloude.r, run.r);
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4( vec3(position.x , position.y, position.z + (pos * 25. )  ), 1.0 );
-    
-    gl_PointSize = 5.0 * mix(run, cloude, run);
+
+    gl_PointSize = pos;
   }
 `;
 
@@ -75,13 +75,18 @@ var fragmentShader = `
   precision highp float;
 
   uniform sampler2D mask;
+  uniform sampler2D texture;
   varying vec2 vUv;
   uniform float time;
-  void main() { 
-  
 
+  void main() { 
+    float step = 1. / 12.;
+    vec2 runUVs = vec2(vUv.x * step + (time * step ) , vUv.y);
+    vec4 run = texture2D( texture, runUVs );
     vec3 color = vec3(1.0, 0.2, 0.2);
-    
+    if (run.r < 0.2){
+      discard; 
+    }    
     gl_FragColor = vec4(color, texture2D( mask, gl_PointCoord ).a);   
 
   }
