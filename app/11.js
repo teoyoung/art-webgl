@@ -36,7 +36,7 @@ function LoadVertex( arr ){
 
 }
 
-const vertex_pos = new LoadVertex([ new THREE.PlaneBufferGeometry( 500, 500, 42, 42 ) ]);
+const vertex_pos = new LoadVertex([ new THREE.PlaneBufferGeometry( 500, 500, 120, 120 ) ]);
 console.log(vertex_pos);
 
 var vertexShader = `
@@ -55,8 +55,18 @@ var vertexShader = `
 
   void main() {
     vUv = uv;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-    gl_PointSize = 5.0 * texture2D( texture, uv ).a;
+
+    float step = 1. / 12.;
+
+    vec2 runUVs = vec2(uv.x * step + (time * step ) , uv.y);
+    
+    float run = texture2D( texture, runUVs ).r;
+    float cloude = texture2D( texture, vec2(uv.x * step, uv.y + time / 2.) ).g;
+    float pos = mix(run, cloude, run);
+
+    gl_Position = projectionMatrix * modelViewMatrix * vec4( vec3(position.x , position.y, position.z + (pos * 25. )  ), 1.0 );
+    
+    gl_PointSize = 5.0 * mix(run, cloude, run);
   }
 `;
 
@@ -66,10 +76,11 @@ var fragmentShader = `
 
   uniform sampler2D mask;
   varying vec2 vUv;
+  uniform float time;
+  void main() { 
+  
 
-  void main() {    
-
-    vec3 color = vec3(1.0, 0., 0.);
+    vec3 color = vec3(1.0, 0.2, 0.2);
     
     gl_FragColor = vec4(color, texture2D( mask, gl_PointCoord ).a);   
 
@@ -85,7 +96,7 @@ var material = new THREE.RawShaderMaterial({
   uniforms: { 
     time: { type: "f", value: 0.0 }, 
     mask: { value: new THREE.TextureLoader().load( "./asset/crl.png" ) },
-    texture: { value: new THREE.TextureLoader().load( "./asset/crl.png" ) } 
+    texture: { value: new THREE.TextureLoader().load( "./asset/run.png", function(e){ e.wrapS = e.wrapT = THREE.RepeatWrapping } ) } 
 }, 
   vertexShader: vertexShader, 
   fragmentShader: fragmentShader,
@@ -100,13 +111,20 @@ var mesh = new THREE.Points( geometry, material );
 
 scene.add( mesh );
 
+let k = 0;
 
 function animate() {
+
+    k += 0.5;
     
     if (contril_sis){
         controls.update();
     }
 
+    if (k % 2 == 0) {
+      material.uniforms.time.value += 1.0;
+      console.log(material.uniforms.time.value);
+    }
     requestAnimationFrame( animate );
     renderer.render( scene, camera );
     stats.update();
