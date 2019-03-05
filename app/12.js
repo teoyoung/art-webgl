@@ -42,8 +42,7 @@ var vertexShader = `
 var fragmentShader = `
 
   precision highp float;
-
-  uniform sampler2D mask;
+  
   uniform sampler2D snow;
   uniform sampler2D dif;
   uniform float time;
@@ -51,9 +50,11 @@ var fragmentShader = `
   varying vec2 vUv;
   varying vec3 u_normal;
 
-  float snow_mask( vec3 pos, vec3 normal, float power ){
+  float snow_mask( vec3 pos, vec3 normal ){
 
-    return max(0.0, dot(normal, normalize(pos))) * power;
+    float form = max(0.0, dot(normal, normalize(pos)));
+
+    return pow(form, abs(sin(time)) * 4.);
 
   }
   
@@ -61,7 +62,7 @@ var fragmentShader = `
   void main() { 
 
     vec3 show_origin = vec3(-10.5, 30.2, 1.0);
-    float mask = snow_mask(show_origin, u_normal, 1.);  
+    float mask = snow_mask(show_origin, u_normal);  
 
     vec4 snow = texture2D( snow, vUv * 2. ); 
     vec4 dif = texture2D( dif, vUv * 2. ); 
@@ -79,7 +80,6 @@ var fragmentShader = `
 var material = new THREE.RawShaderMaterial({    
   uniforms: { 
     time: { type: "f", value: 0.0 }, 
-    mask: { value: new THREE.TextureLoader().load( "./asset/crl.png" ) },
     snow: { value: new THREE.TextureLoader().load( "./asset/snow.jpg", function(e){ e.wrapS = e.wrapT = THREE.RepeatWrapping } ) },
     dif: { value: new THREE.TextureLoader().load( "./asset/dif.jpg", function(e){ e.wrapS = e.wrapT = THREE.RepeatWrapping } ) } 
 }, 
@@ -102,6 +102,8 @@ function animate() {
     if (contril_sis){
         controls.update();
     }
+
+    material.uniforms.time.value += 0.01;
 
     requestAnimationFrame( animate );
     renderer.render( scene, camera );
