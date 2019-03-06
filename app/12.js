@@ -128,7 +128,7 @@ var material2 = new THREE.RawShaderMaterial({
 
     float form = max(0.0, dot(normal, normalize(pos)));
     float t = form;
-    return (1.-t) * 0.9 + t * abs(sin(time)); 
+    return abs(sin(time)) * (2.- abs(sin(time))) * t; 
 
   }
   
@@ -143,7 +143,7 @@ var material2 = new THREE.RawShaderMaterial({
 
     vec3 color = mix( dif.rgb, snow.rgb, mask); 
 
-    gl_FragColor = vec4(color, 1.0);   
+    gl_FragColor = vec4(vec3(mask), 1.0);   
 
   }
 
