@@ -20,6 +20,18 @@ if (contril_sis){
 }
 
 
+
+var FizzyText = function() {
+  this.speed = 0.8;
+};
+
+window.onload = function() {
+  var text = new FizzyText();
+  var gui = new dat.GUI();
+  gui.add(text, 'speed', -5, 5);
+};
+
+
 var vertexShader = `
   precision highp float;
 
@@ -52,10 +64,16 @@ var fragmentShader = `
   varying vec2 vUv;
   varying vec3 u_normal;
 
+  float easy ( float t ){
+    return t*t;
+  }
+
   float snow_mask( vec3 pos, vec3 normal ){
 
     float form = max(0.0, dot(normal, normalize(pos)));
-    return pow(form, mix(0.8, 10., abs(sin(time))));
+    //pow(form, 0.8);
+    float t = 0.2;
+    return t*(form-t);
 
   }
   
@@ -70,7 +88,7 @@ var fragmentShader = `
 
     vec3 color = mix( dif.rgb, snow.rgb, mask); 
 
-    gl_FragColor = vec4(color * dif.a, 1.0);   
+    gl_FragColor = vec4(vec3(mask) * dif.a, 1.0);   
 
   }
 
@@ -109,7 +127,8 @@ var material2 = new THREE.RawShaderMaterial({
   float snow_mask( vec3 pos, vec3 normal ){
 
     float form = max(0.0, dot(normal, normalize(pos)));
-    return pow(form, mix(0.8, 10., abs(sin(time))));
+    float t = form;
+    return (1.-t) * 0.9 + t * abs(sin(time)); 
 
   }
   
