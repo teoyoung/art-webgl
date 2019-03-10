@@ -33,9 +33,9 @@ var gui = new dat.GUI();
 gui.add( params, 'snowdrift', 0.01, 3.0 );
 gui.add( params, 'snowfall', 0.01, 1.0 );
 gui.add( params, 'snowfall_power', 0., 2.5 );
-gui.add( params, 'x', 0., 10.0 );
-gui.add( params, 'y', 0., 10.0 );
-gui.add( params, 'z', 0., 10.0 );
+gui.add( params, 'x', -10.0, 10.0 );
+gui.add( params, 'y', -10.0, 10.0 );
+gui.add( params, 'z', -10.0, 10.0 );
 
 
 
