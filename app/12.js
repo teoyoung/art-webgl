@@ -21,11 +21,21 @@ if (contril_sis){
 
 var params = {
   shadows: true,
-  progress: 1.5,
+  snowdrift: 1.5,
+  snowfall: 1.0,
+  snowfall_power: 1.0,
+  x:0.0,
+  y:5.0,
+  z:5.0
 };
 
 var gui = new dat.GUI();
-gui.add( params, 'progress', 0.01, 3.0 );
+gui.add( params, 'snowdrift', 0.01, 3.0 );
+gui.add( params, 'snowfall', 0.01, 1.0 );
+gui.add( params, 'snowfall_power', 0., 2.5 );
+gui.add( params, 'x', 0., 10.0 );
+gui.add( params, 'y', 0., 10.0 );
+gui.add( params, 'z', 0., 10.0 );
 
 
 
@@ -60,8 +70,13 @@ var fragmentShader = `
   uniform sampler2D list;
   uniform sampler2D msk;
 
-  uniform float time;
-  uniform float progress;
+  uniform vec3 vector;
+  
+  uniform float snowdrift;
+  uniform float snowfall;
+  uniform float snowfall_power;
+  
+  
   
   varying vec2 vUv;
   varying vec3 u_normal;
@@ -72,35 +87,32 @@ var fragmentShader = `
 
   float snow_mask( vec3 pos, vec3 normal ){
 
-    float form = max(0.0, dot(normal, normalize(pos)));
-    return pow(form, 0.8);
+    return max(0.0, dot(normal * 0.5, normalize(pos))) * snowfall_power;
 
   }
-  
 
   void main() { 
 
-    float radius = progress; 
+    float radius = snowdrift; 
     float power = 1.0;
 
-    if (progress < 0.1){
-      power = progress * 2.5;
+    if (snowdrift < 0.1){
+      power = snowdrift * 2.5;
     }
 
 
-    vec3 show_origin = vec3(5., 30, 10);
-    float mask = snow_mask(show_origin, u_normal); 
+    vec3 show_origin = vec3(0., 30, 150);
+    float mask = snow_mask(vector, u_normal); 
 
-    //float mask_sn = mix(0., pow(u_normal.y, 1.5 / 1.4), power);
-    float mask_sn = mix(0., smoothstep(0., 1., u_normal.y * progress), power);
+    float mask_sn = mix(0., smoothstep(0., 1., u_normal.y * snowdrift), power);
+
+    float mixmask = mix(mask_sn, max(mask, mask_sn),snowfall);
 
     vec4 snow = texture2D( snow, vUv * 3. ); 
     vec4 msk = texture2D( msk, vUv ); 
     vec4 dif = texture2D( dif, vUv * 3. ); 
-    vec4 list = texture2D( list, vUv * 15.); 
 
-    vec4 g_color = mix(dif, snow, mask_sn);
-    vec4 t_color = mix(list, vec4(1.), mask_sn );
+    vec4 g_color = mix(dif, snow, mixmask);
 
     gl_FragColor = g_color * msk.a;   
 
@@ -112,8 +124,10 @@ var fragmentShader = `
 var material = new THREE.RawShaderMaterial({    
   uniforms: { 
     time: { type: "f", value: 0.0 }, 
-    vector: { type: "v3", value: new THREE.Vector3( 0, 1, 0 ) }, 
-    progress: { type: "f", value: 0.0 }, 
+    vector: { type: "v3", value: new THREE.Vector3( 50, 1, 0 ) }, 
+    snowdrift: { type: "f", value: 0.0 }, 
+    snowfall: { type: "f", value: 0.0 },  
+    snowfall_power: { type: "f", value: 0.0 },       
     snow: { value: new THREE.TextureLoader().load( "./asset/snow.jpg", function(e){ e.wrapS = e.wrapT = THREE.RepeatWrapping } ) },
     dif: { value: new THREE.TextureLoader().load( "./asset/dif.jpg", function(e){ e.wrapS = e.wrapT = THREE.RepeatWrapping } ) },
     msk: { value: new THREE.TextureLoader().load( "./asset/snow_map.png" ) },
@@ -173,12 +187,12 @@ var material2 = new THREE.RawShaderMaterial({
 var sphere = new THREE.Mesh( new THREE.SphereBufferGeometry( 60, 32, 32 ), material2 );
 sphere.position.x = 120;
 sphere.position.z = 220;
-scene.add( sphere );
+//scene.add( sphere );
 
 var cube = new THREE.Mesh( new THREE.BoxBufferGeometry( 60, 60, 60 ), material2 );
 cube.position.x = 220;
 cube.position.z = 220;
-scene.add( cube );
+//scene.add( cube );
 
 
 
@@ -233,9 +247,15 @@ function animate() {
 
     material.uniforms.time.value += 0.01;
     material2.uniforms.time.value += 0.01;
+    
 
-    material.uniforms.progress.value = params.progress;
-
+    material.uniforms.snowdrift.value = params.snowdrift;
+    material.uniforms.snowfall.value = params.snowfall;
+    material.uniforms.snowfall_power.value = params.snowfall_power;
+    
+    material.uniforms.vector.value.x = params.x;
+    material.uniforms.vector.value.y = params.y;
+    material.uniforms.vector.value.z = params.z;
     requestAnimationFrame( animate );
     renderer.render( scene, camera );
     stats.update();

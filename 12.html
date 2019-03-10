@@ -4,6 +4,8 @@
         <meta charset="utf-8">
         <title>Пример страницы</title>
         <style>
+            body { margin: 0; padding: 0; overflow: hidden;}
+			canvas { width: 100%; height: 100%; z-index: 1; }
 
         </style>
         <script src="lib/three_100.js"></script>
@@ -16,10 +18,6 @@
         
     </head>
     <body>
-        <div class="info">
-            <p>render<span id="render"></span></p>
-
-        </div>
         <script src="app/webgl.js"></script>
         <script src="app/12.js"></script>
     </body>
