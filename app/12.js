@@ -23,7 +23,7 @@ var params = {
   shadows: true,
   snowdrift: 1.5,
   snowfall: 1.0,
-  snowfall_power: 1.0,
+  snowfall_power: 2.0,
   x:0.0,
   y:5.0,
   z:5.0
