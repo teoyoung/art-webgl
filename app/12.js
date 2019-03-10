@@ -19,17 +19,15 @@ if (contril_sis){
     camera.lookAt(new THREE.Vector3(0,0,0));
 }
 
-
-
-var FizzyText = function() {
-  this.speed = 0.8;
+var params = {
+  shadows: true,
+  progress: 1.5,
 };
 
-window.onload = function() {
-  var text = new FizzyText();
-  var gui = new dat.GUI();
-  gui.add(text, 'speed', -5, 5);
-};
+var gui = new dat.GUI();
+gui.add( params, 'progress', 0.01, 3.0 );
+
+
 
 
 var vertexShader = `
@@ -55,12 +53,16 @@ var vertexShader = `
 
 var fragmentShader = `
 
-  precision highp float;
+  precision lowp float;
   
   uniform sampler2D snow;
   uniform sampler2D dif;
-  uniform float time;
+  uniform sampler2D list;
+  uniform sampler2D msk;
 
+  uniform float time;
+  uniform float progress;
+  
   varying vec2 vUv;
   varying vec3 u_normal;
 
@@ -71,39 +73,55 @@ var fragmentShader = `
   float snow_mask( vec3 pos, vec3 normal ){
 
     float form = max(0.0, dot(normal, normalize(pos)));
-    //pow(form, 0.8);
-    float t = 0.2;
-    return t*(form-t);
+    return pow(form, 0.8);
 
   }
   
 
   void main() { 
 
+    float radius = progress; 
+    float power = 1.0;
+
+    if (progress < 0.1){
+      power = progress * 2.5;
+    }
+
+
     vec3 show_origin = vec3(5., 30, 10);
-    float mask = snow_mask(show_origin, u_normal);  
+    float mask = snow_mask(show_origin, u_normal); 
 
-    vec4 snow = texture2D( snow, vUv * 2. ); 
-    vec4 dif = texture2D( dif, vUv ); 
+    //float mask_sn = mix(0., pow(u_normal.y, 1.5 / 1.4), power);
+    float mask_sn = mix(0., smoothstep(0., 1., u_normal.y * progress), power);
 
-    vec3 color = mix( dif.rgb, snow.rgb, mask); 
+    vec4 snow = texture2D( snow, vUv * 3. ); 
+    vec4 msk = texture2D( msk, vUv ); 
+    vec4 dif = texture2D( dif, vUv * 3. ); 
+    vec4 list = texture2D( list, vUv * 15.); 
 
-    gl_FragColor = vec4(vec3(mask) * dif.a, 1.0);   
+    vec4 g_color = mix(dif, snow, mask_sn);
+    vec4 t_color = mix(list, vec4(1.), mask_sn );
+
+    gl_FragColor = g_color * msk.a;   
 
   }
 
 `;
 
 
-
 var material = new THREE.RawShaderMaterial({    
   uniforms: { 
     time: { type: "f", value: 0.0 }, 
+    vector: { type: "v3", value: new THREE.Vector3( 0, 1, 0 ) }, 
+    progress: { type: "f", value: 0.0 }, 
     snow: { value: new THREE.TextureLoader().load( "./asset/snow.jpg", function(e){ e.wrapS = e.wrapT = THREE.RepeatWrapping } ) },
-    dif: { value: new THREE.TextureLoader().load( "./asset/snow_map.png", function(e){ e.wrapS = e.wrapT = THREE.RepeatWrapping } ) } 
+    dif: { value: new THREE.TextureLoader().load( "./asset/dif.jpg", function(e){ e.wrapS = e.wrapT = THREE.RepeatWrapping } ) },
+    msk: { value: new THREE.TextureLoader().load( "./asset/snow_map.png" ) },
+    list: { value: new THREE.TextureLoader().load( "./asset/leaves-autumn-fon-osennie-listia.jpg", function(e){ e.wrapS = e.wrapT = THREE.RepeatWrapping } ) }  
 }, 
   vertexShader: vertexShader, 
-  fragmentShader: fragmentShader
+  fragmentShader: fragmentShader,
+  side:THREE.DoubleSide
 });
 
 var material2 = new THREE.RawShaderMaterial({    
@@ -143,7 +161,7 @@ var material2 = new THREE.RawShaderMaterial({
 
     vec3 color = mix( dif.rgb, snow.rgb, mask); 
 
-    gl_FragColor = vec4(vec3(mask), 1.0);   
+    gl_FragColor = vec4(dif.xyz, 1.0);   
 
   }
 
@@ -173,7 +191,7 @@ scene.add( cube );
 
 obj_loader.load(
 
-  'asset/snow.obj', 
+  'asset/snowt.obj', 
 
 function ( object ) {
 
@@ -185,7 +203,9 @@ function ( object ) {
 
       });
 
-      object.scale.set(3.0, 3.0, 3.0);
+      let scale = 40;
+
+      object.scale.set(scale, scale, scale);
       
       scene.add( object );
   },
@@ -206,7 +226,6 @@ function ( error ) {
 );
 
 function animate() {
-
     
     if (contril_sis){
         controls.update();
@@ -214,6 +233,8 @@ function animate() {
 
     material.uniforms.time.value += 0.01;
     material2.uniforms.time.value += 0.01;
+
+    material.uniforms.progress.value = params.progress;
 
     requestAnimationFrame( animate );
     renderer.render( scene, camera );
