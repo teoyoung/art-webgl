@@ -61,7 +61,7 @@ varying vec2 vUv;
 
     gl_FragColor = color;
     gl_FragColor.r += axis.x;
-    gl_FragColor.g += axis.y;
+    gl_FragColor.y += axis.y;
 
 
   }
