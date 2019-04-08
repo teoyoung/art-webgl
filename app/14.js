@@ -33,9 +33,9 @@ let vertexShader = `
 
   attribute vec3 position;
   attribute vec3 position2;
+  attribute vec3 normal2;
     
-  void main(){
-    
+  void main(){    
     gl_Position = projectionMatrix * modelViewMatrix * vec4(mix(position, position2, time), 1.0 );
   }
   
@@ -73,6 +73,7 @@ loader.load( "asset/morph.json",
       console.log(e.children.length);
       if (e.children.length === 1){
         e.geometry.addAttribute('position2', new THREE.BufferAttribute( new Float32Array( e.children[0].geometry.attributes.position.array ), 3 ) );
+        e.geometry.addAttribute('normal2', new THREE.BufferAttribute( new Float32Array( e.children[0].geometry.attributes.normal.array ), 3 ) );
         e.remove(e.children[0]);
       }
       e.material = materials[e.name];
