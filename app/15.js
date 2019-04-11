@@ -25,7 +25,7 @@ let vertexShader = `
 `;
 
 let fragmentShader = `
-precision lowp float;
+precision highp float;
 
 varying vec2 vUv;
 
@@ -35,17 +35,12 @@ varying vec2 vUv;
   } 
 
   vec2 greed( float size, vec2 uv, float p ){
-
     vec2 st = uv;
-
     st *= size;
-    st = fract(st);
-  
+    st = fract(st); 
     float x = line(p, st.x);
     float y = line(p, st.y);
-
     return vec2( x, y);
-
   }
 
   void main(){
