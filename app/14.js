@@ -35,8 +35,8 @@ let vertexShader = `
   attribute vec3 position2;
   attribute vec3 normal2;
     
-  void main(){    
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(mix(position, position2, time), 1.0 );
+  void main(){   
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(mix(position2, position2, time), 1.0 );
   }
   
 `;
@@ -55,7 +55,9 @@ let materials = {
   "morph": new THREE.RawShaderMaterial({
     uniforms: { time: { type: "f", value: config.zoom }},
     vertexShader: vertexShader,
-    fragmentShader: fragmentShader
+    fragmentShader: fragmentShader,
+    morphTargets: true,
+    skinning: true
   })
 }
 
