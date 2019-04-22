@@ -219,6 +219,7 @@ obj_loader.load(
 function InstancedBuffer( obj ){
 
     let instanced = new THREE.InstancedBufferGeometry().copy(tree.obj);
+    console.log("instans", instanced);
 
     instanced.addAttribute("instPos", new THREE.InstancedBufferAttribute(new Float32Array(positions), 3, false ));
     console.log('from', tree.obj.attributes.position.array);

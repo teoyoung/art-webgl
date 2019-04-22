@@ -10,7 +10,6 @@ camera.position.z = 500;
 
 //
 
-let t_loader = new THREE.TextureLoader();
 let g_loader = new THREE.ObjectLoader();
 
 window.addEventListener( 'resize', onWindowResize, false );
