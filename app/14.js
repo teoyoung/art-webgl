@@ -37,8 +37,10 @@ let vertexShader = `
   attribute vec2 uv;
     
   varying vec2 vUv;
+  varying float _time;
 
   void main(){  
+    _time = time;
     vUv = uv;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(mix(position, position2, time), 1.0 );
   }
@@ -47,7 +49,6 @@ let vertexShader = `
 
 let fragmentShader = `
 
-  uniform float time;
 
   precision mediump float;
 
@@ -55,11 +56,11 @@ let fragmentShader = `
   uniform sampler2D map_2;
 
   varying vec2 vUv;
-
+  varying float _time;
   void main(){
     vec4 map_1 = texture2D( map_1, vUv );
     vec4 map_2 = texture2D( map_2, vUv );
-    vec4 fin = mix(map_1, map_2, 0.5);
+    vec4 fin = mix(map_1, map_2, _time);
     gl_FragColor = fin;
   }
 
