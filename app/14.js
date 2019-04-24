@@ -72,8 +72,8 @@ let materials = {
   "morph": new THREE.RawShaderMaterial({
     uniforms: { 
       time: { type: "f", value: config.zoom },
-      map_1: { type: "t", value: new THREE.TextureLoader().load( "asset/morph/morph.jpg" ) },
-      map_2: { type: "t", value: new THREE.TextureLoader().load( "asset/morph/morph_.jpg" ) }
+      map_1: { type: "t", value: new THREE.TextureLoader().load( "texture/morph/morph.jpg" ) },
+      map_2: { type: "t", value: new THREE.TextureLoader().load( "texture/morph/morph_.jpg" ) }
     },
     vertexShader: vertexShader,
     fragmentShader: fragmentShader
