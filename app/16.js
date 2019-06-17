@@ -14,9 +14,39 @@ const vShader = `
 const fShader = `
   precision mediump float;   
   varying vec2 v_uv; 
-  uniform sampler2D u_image;   
+  uniform sampler2D u_image1;
+  uniform sampler2D u_image2;
+  uniform sampler2D u_brd;
+  uniform float u_time;  
+  uniform float u_jump; 
+
+  float recMask(vec2 move){
+    vec2 uvR = vec2(v_uv.x, v_uv.y - move.y);
+    float i = step(0.4 - move.y, v_uv.y) - step(0.8 - move.y, v_uv.y);
+    float shit = mix(1., 0., i) + step(0.4, v_uv.x);
+    return clamp(shit, 0., 1.);
+  }
+
+  vec4 maskB(vec4 img, vec2 move){
+    float rct = recMask(move);
+    vec4 ms = mix(img, vec4(0.0), rct);
+    return ms;
+  }
+
   void main() {
-    gl_FragColor = texture2D(u_image, v_uv);
+    vec4 bg_1 = texture2D(u_image1, vec2(v_uv.x + u_time, v_uv.y));
+    vec4 bg_2 = texture2D(u_image2, vec2(v_uv.x + u_time / 2., v_uv.y));
+
+    // bird
+    vec2 mv = vec2(0, u_jump);
+    vec4 u_brd = texture2D(u_brd, vec2(v_uv.x * 2. - mv.x, v_uv.y * 2. + mv.y * 2.6));
+    vec4 ms = maskB(u_brd, mv);
+    float rctms = recMask(mv);
+    vec4 mixbg = mix(bg_2, bg_1, bg_1.a);
+    vec4 addBird = mix(mixbg, ms, ms.a);
+    
+    // vec4(vec3(rctms), 1.)
+    gl_FragColor = addBird;
   }
 `;
 
@@ -26,29 +56,97 @@ Resize();
 const vertexShader = CreateShader(cntx, cntx.VERTEX_SHADER, vShader);
 const fragmentShader = CreateShader(cntx, cntx.FRAGMENT_SHADER, fShader);
 const program = CreateProgram(cntx, vertexShader, fragmentShader);
-
+// 
 cntx.useProgram(program);
 
-const image = new Image();
-image.crossOrigin = "anonymous";
-image.src = "asset/uv.jpg";
-image.onload = function() {
-  DrawRectangle(image.width, image.height, image);
-};
+let lal = 0.5; 
+let _jump = 0;
+let textures = [];
+let go_txt = [];
+
+Images(["asset/bg.jpg", "asset/bg.png", "asset/brd.png"], setTextures );
+
+function setTextures( maps ){
+  for (let i = 0; i < maps.length; i++) {    
+    let texture = cntx.createTexture();
+    cntx.bindTexture(cntx.TEXTURE_2D, texture);
+    go_txt.push(texture);
+  
+    cntx.texParameteri(cntx.TEXTURE_2D, cntx.TEXTURE_WRAP_S, cntx.REPEAT);
+    cntx.texParameteri(cntx.TEXTURE_2D, cntx.TEXTURE_WRAP_T, cntx.REPEAT);
+    cntx.texParameteri(cntx.TEXTURE_2D, cntx.TEXTURE_MIN_FILTER, cntx.NEAREST);
+    cntx.texParameteri(cntx.TEXTURE_2D, cntx.TEXTURE_MAG_FILTER, cntx.NEAREST);
+    cntx.texImage2D(cntx.TEXTURE_2D, 0, cntx.RGBA, cntx.RGBA, cntx.UNSIGNED_BYTE, maps[i]); 
+  }
+  DrawRectangle(512, 512, lal, 0.8);
+}
+
+
+animation();
+function animation(){  
+    cntx.clear(cntx.COLOR_BUFFER_BIT);  
+    lal += 0.0025;
+    _jump += 0.01;
+    if( _jump >= 1){
+      _jump = 0;
+    }
+    DrawRectangle(512, 512, lal, JumpEv(_jump));
+    requestAnimationFrame(animation);
+}
+
+function JumpEv( val){
+  return (1-val)*0.5 + val * 0.0 
+}
+
+function Images(urls, callback){
+  let lenght = urls.length;
+
+  var loaderImage = function() {
+    --lenght;
+    if (lenght == 0) {
+      callback(textures);
+    }
+  };
+
+  for (var i = 0; i < lenght; ++i) {
+    var image = LoadedImage(urls[i], loaderImage);
+    textures.push(image);
+  }
+
+}
+
+
+function LoadedImage(url, callback){
+  let image = new Image();
+  image.src = url;
+  image.onload = callback;
+  return image;
+}
 
 
 
-function DrawRectangle( width, heigh, img ){
+function DrawRectangle( width, heigh, time, jump ){
 
-  let texture = cntx.createTexture();
   let positionAttribute = cntx.getAttribLocation(program, "a_position");
-  let resolutionUniform = cntx.getUniformLocation(program, "u_resolution");
   let uv = cntx.getAttribLocation(program, "a_uv");
+  let resolutionUniform = cntx.getUniformLocation(program, "u_resolution");
+  let localResolution = cntx.getUniformLocation(program, "u_loc_resolution");
+  let u_time = cntx.getUniformLocation(program, "u_time");
+  let u_jump = cntx.getUniformLocation(program, "u_jump");
+  let u_image0 = cntx.getUniformLocation(program, "u_image0");
+  let u_image1 = cntx.getUniformLocation(program, "u_image1");
+  let u_image2 = cntx.getUniformLocation(program, "u_brd");
 
   let positionBuffer = cntx.createBuffer();
   let texCoordBuffer = cntx.createBuffer();
 
   cntx.uniform2f(resolutionUniform, cntx.canvas.width, cntx.canvas.height);
+  cntx.uniform2f(localResolution, width, heigh);
+  cntx.uniform1f(u_time, time);
+  cntx.uniform1f(u_jump, jump);  
+  cntx.uniform1i(u_image0, 0);  // texture unit 0
+  cntx.uniform1i(u_image1, 1);  // texture unit 1
+  cntx.uniform1i(u_image2, 2);  // texture unit 1
 
   cntx.bindBuffer(cntx.ARRAY_BUFFER, texCoordBuffer);
   cntx.bufferData(cntx.ARRAY_BUFFER, new Float32Array([
@@ -77,26 +175,17 @@ function DrawRectangle( width, heigh, img ){
   ]), cntx.STATIC_DRAW);
 
   cntx.enableVertexAttribArray(positionAttribute);
-  cntx.vertexAttribPointer(positionAttribute, 2, cntx.FLOAT, false, 0, 0);
+  cntx.vertexAttribPointer(positionAttribute, 2, cntx.FLOAT, false, 0, 0); 
 
-
-  cntx.bindTexture(cntx.TEXTURE_2D, texture);
-
-  cntx.texParameteri(cntx.TEXTURE_2D, cntx.TEXTURE_WRAP_S, cntx.CLAMP_TO_EDGE);
-  cntx.texParameteri(cntx.TEXTURE_2D, cntx.TEXTURE_WRAP_T, cntx.CLAMP_TO_EDGE);
-  cntx.texParameteri(cntx.TEXTURE_2D, cntx.TEXTURE_MIN_FILTER, cntx.NEAREST);
-  cntx.texParameteri(cntx.TEXTURE_2D, cntx.TEXTURE_MAG_FILTER, cntx.NEAREST);
-
-  cntx.texImage2D(cntx.TEXTURE_2D, 0, cntx.RGBA, cntx.RGBA, cntx.UNSIGNED_BYTE, img);  
+  cntx.activeTexture(cntx.TEXTURE0);
+  cntx.bindTexture(cntx.TEXTURE_2D, go_txt[0]);
+  cntx.activeTexture(cntx.TEXTURE1);
+  cntx.bindTexture(cntx.TEXTURE_2D, go_txt[1]);
+  cntx.activeTexture(cntx.TEXTURE2);
+  cntx.bindTexture(cntx.TEXTURE_2D, go_txt[2]);
 
   cntx.drawArrays(cntx.TRIANGLES, 0, 6); 
 
-}
-
-function requestCORSIfNotSameOrigin(img, url) {
-  if ((new URL(url)).origin !== window.location.origin) {
-    img.crossOrigin = "";
-  }
 }
 
 function Resize(){
@@ -134,4 +223,19 @@ function CreateProgram (gl, _vertexShader, _fragmentShader){
   gl.deleteProgram(program);
 
 }
+
+
+
+document.addEventListener('mousedown', function(event) {
+  _jump -= 0.25;
+}, false);
+
+
+document.addEventListener('keydown', function(event) {
+  _jump -= 0.25;
+}, false);
+
+document.addEventListener('touchstart', function(event) {
+  _jump -= 0.25;
+}, false);
 
