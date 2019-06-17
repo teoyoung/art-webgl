@@ -235,6 +235,12 @@ document.addEventListener('keydown', function(event) {
   _jump -= 0.25;
 }, false);
 
+document.addEventListener('dblclick', function(event) {
+  _jump -= 0.40;
+}, false);
+
+
+
 // document.addEventListener('touchstart', function(event) {
 //   _jump -= 0.25;
 // }, false);
