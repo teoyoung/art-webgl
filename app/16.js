@@ -3,11 +3,14 @@ const vShader = `
   attribute vec2 a_uv;   
   uniform vec2 u_resolution;  
   varying vec2 v_uv;
+  varying vec2 v_resolution;
   void main() {
+    
     vec2 zeroToOne = a_position / u_resolution;
     vec2 zeroToTwo = zeroToOne * 2.0;
     vec2 clipSpace = zeroToTwo - 1.0;
     gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+    v_resolution = zeroToOne;
     v_uv = a_uv;
   }
 `;
@@ -18,19 +21,14 @@ const fShader = `
   uniform sampler2D u_image2;
   uniform sampler2D u_brd;
   uniform float u_time;  
-  uniform float u_jump; 
+  uniform float u_move; 
+  varying vec2 v_resolution;
 
-  float recMask(vec2 move){
-    vec2 uvR = vec2(v_uv.x, v_uv.y - move.y);
-    float i = step(0.4 - move.y, v_uv.y) - step(0.8 - move.y, v_uv.y);
-    float shit = mix(1., 0., i) + step(0.4, v_uv.x);
-    return clamp(shit, 0., 1.);
-  }
-
-  vec4 maskB(vec4 img, vec2 move){
-    float rct = recMask(move);
-    vec4 ms = mix(img, vec4(0.0), rct);
-    return ms;
+  float recMask(float move){
+    float iy = step(0.2 + move, v_resolution.y) - step(0.5 +  move, v_resolution.y);
+    float ix = step(0.1, v_resolution.x);
+    float xx = iy + ix;
+    return ix;
   }
 
   void main() {
@@ -38,15 +36,22 @@ const fShader = `
     vec4 bg_2 = texture2D(u_image2, vec2(v_uv.x + u_time / 2., v_uv.y));
 
     // bird
-    vec2 mv = vec2(0, u_jump);
-    vec4 u_brd = texture2D(u_brd, vec2(v_uv.x * 2. - mv.x, v_uv.y * 2. + mv.y * 2.6));
-    vec4 ms = maskB(u_brd, mv);
-    float rctms = recMask(mv);
+    vec2 bUv = vec2(v_uv.x * 2., v_uv.y * 2.);
+    float bmv = u_time * 0.2;
+    if(u_move == 1.){
+      bmv -= 0.1;
+      bmv *= -1.;
+    }
+
+
+    vec2 mv = vec2(0, u_move);
+    float rctms = recMask(bmv);
     vec4 mixbg = mix(bg_2, bg_1, bg_1.a);
-    vec4 addBird = mix(mixbg, ms, ms.a);
+    // vec4 addBird = mix(mixbg, u_brd, u_brd.a);
     
     // vec4(vec3(rctms), 1.)
-    gl_FragColor = addBird;
+    gl_FragColor = vec4(vec3(rctms), 1.);
+
   }
 `;
 
@@ -59,8 +64,8 @@ const program = CreateProgram(cntx, vertexShader, fragmentShader);
 // 
 cntx.useProgram(program);
 
-let lal = 0.5; 
-let _jump = 0;
+let time = 0.5; 
+let move = 0;
 let textures = [];
 let go_txt = [];
 
@@ -85,17 +90,9 @@ function setTextures( maps ){
 animation();
 function animation(){  
     cntx.clear(cntx.COLOR_BUFFER_BIT);  
-    lal += 0.0025;
-    _jump += 0.01;
-    if( _jump >= 1){
-      _jump = 0;
-    }
-    DrawRectangle(512, 512, lal, JumpEv(_jump));
+    time += 0.0025;
+    DrawRectangle(512, 512, time, move);
     requestAnimationFrame(animation);
-}
-
-function JumpEv( val){
-  return (1-val)*0.5 + val * 0.0 
 }
 
 function Images(urls, callback){
@@ -132,7 +129,7 @@ function DrawRectangle( width, heigh, time, jump ){
   let resolutionUniform = cntx.getUniformLocation(program, "u_resolution");
   let localResolution = cntx.getUniformLocation(program, "u_loc_resolution");
   let u_time = cntx.getUniformLocation(program, "u_time");
-  let u_jump = cntx.getUniformLocation(program, "u_jump");
+  let u_jump = cntx.getUniformLocation(program, "u_move");
   let u_image0 = cntx.getUniformLocation(program, "u_image0");
   let u_image1 = cntx.getUniformLocation(program, "u_image1");
   let u_image2 = cntx.getUniformLocation(program, "u_brd");
@@ -232,8 +229,14 @@ document.addEventListener('mousedown', function(event) {
 
 
 document.addEventListener('keydown', function(event) {
-  _jump -= 0.25;
+  move = 1;
 }, false);
+
+document.addEventListener('keyup', function(event) {
+  move = 0;
+}, false);
+
+ 
 
 document.addEventListener('dblclick', function(event) {
   _jump -= 0.40;
